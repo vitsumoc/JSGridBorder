@@ -39,8 +39,15 @@ function gridBorder(canvas, x, y) {
   // 计算边界
   while (run()) {}
 
+  // 测试边界点
+  // _checkMap()
+
   // 将计算好的map做成一个点的数组
   let borders = borderList()
+
+  // 检测边界
+  // _checkBorders(borders)
+
 
   // 得益于之前 border 点不在扩张的设置, 现在的 borders 可以被绘制成一组短线
   // 由于前面的 borders 是连接有序的, 只需要再迭代一次, 将这些点变成线的端点就可以了
@@ -75,6 +82,7 @@ function run() {
     let y = Number(readyList[i][1])
     let point = map[x][y]
     // 判断自身的状态
+    // if (_colorEqual(point.color, _baseColor)) {
     if (point.color == _baseColor) { // 同色属于内部
       point.state = STATE_INNER
     } else { // 异色属于边界
@@ -157,13 +165,27 @@ function borderList() {
 
 function borderToLine(borders) {
   let linePoints = []
-  let nowPoint = borders[0]
-  linePoints.push([nowPoint[0], nowPoint[1]])
+  let currentP = borders[0]
+  linePoints.push([currentP[0], currentP[1]])
   for (let x = 1; x < borders.length; x++) {
-    if (borders[x][0] != nowPoint[0] && borders[x][1] != nowPoint[1]) {
+    // 非相邻情况, 认为发生了中断
+    if (currentP[0] != borders[x][0] && currentP[1] != borders[x][1]) {
       linePoints.push([borders[x][0], borders[x][1]])
+      // 下次
+      currentP = borders[x]
+      continue
     }
-    nowPoint = borders[x]
+    // 本点和下下个点处于对角, 也认为中断
+    if (x + 1 < borders.length) {
+      if (Math.abs(currentP[0] - borders[x + 1][0]) == 1 && Math.abs(currentP[1] - borders[x + 1][1]) == 1) {
+        linePoints.push([borders[x][0], borders[x][1]])
+        // 下次
+        currentP = borders[x]
+        continue
+      }
+    }
+    // 直线, 继续
+    currentP = borders[x]
   }
   return linePoints
 }
@@ -204,6 +226,54 @@ function _pointOrNull(x, y) {
 function _color(x, y) {
   let p = _ctx.getImageData(x, y, 1, 1).data
   return p[0] * Math.pow(256, 3) + p[1] * Math.pow(256, 2) + p[2] * 256 + p[3]
+}
+
+// 工具方法，稍微有点容忍度的判断颜色是否相等(三色差绝对值之和小于某值视为相等)
+// function _colorEqual(c1, c2) {
+//   let d1 = c1 % 256 - c2 % 256
+//   let d2 = (c1 % (256 * 256)) / 256 - (c2 % (256 * 256)) / 256
+//   let d3 = (c1 % (256 * 256 * 256)) / (256 * 256) - (c2 % (256 * 256 * 256)) / (256 * 256)
+//   let d4 = c1 / (256 * 256 * 256) - c2 / (256 * 256 * 256)
+//   let deff = Math.abs(d1) + Math.abs(d2) + Math.abs(d3) + Math.abs(d4)
+//   if (deff != 0) {
+//     console.log(c1, c2, d1, d2, d3, d4)
+//     console.log(deff)
+//   }
+//   if (deff < 500) {
+//     return true
+//   }
+//   return false
+// }
+
+function _checkMap() {
+  _ctx.save()
+  _ctx.fillStyle = "#FF4400"
+
+  let Xs = Object.keys(map)
+  for (let i = 0; i < Xs.length; i++) {
+    let x = Xs[i]
+    let Ys = Object.keys(map[x])
+    for (let j = 0; j < Ys.length; j++) {
+      let y = Ys[j]
+      let p = map[x][y]
+      if (p.state == STATE_BORDER) {
+        _ctx.fillRect(x, y, 1, 1)
+      }
+    }
+  }
+
+  _ctx.restore()
+}
+
+function _checkBorders(borders) {
+  _ctx.save()
+  _ctx.fillStyle = "#4400FF"
+
+  borders.forEach(p => {
+    _ctx.fillRect(p[0], p[1], 1, 1)
+  })
+
+  _ctx.restore()
 }
 
 export {gridBorder}

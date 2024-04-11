@@ -1,4 +1,4 @@
-import backImg from '../3.png'
+import backImg from '../1.png'
 
 import {gridBorder} from './gridBorder.js'
 
@@ -14,11 +14,12 @@ img.onload = function(){
     let border = gridBorder(canvas, e.offsetX, e.offsetY)
 
     // 绘制测试
+    ctx.strokeStyle = "#999999"
+    ctx.beginPath()
     border.push(border[0])
-    for (let x = 0; x < border.length - 1; x++) {
-      ctx.moveTo(border[x][0], border[x][1])
-      ctx.lineTo(border[x+1][0], border[x+1][1])
-      ctx.stroke()
+    for (let x = 0; x < border.length; x++) {
+      ctx.lineTo(border[x][0], border[x][1])
     }
+    ctx.stroke()
   }
 }
